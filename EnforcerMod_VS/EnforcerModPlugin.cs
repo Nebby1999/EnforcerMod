@@ -199,7 +199,7 @@ namespace EnforcerPlugin {
                 ScepterSetup();
             }
             //shartstorm 2 xDDDD
-            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.TeamMoonstorm.Starstorm2")) {
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.TeamMoonstorm.TKStarstorm2")) {
                 starstormInstalled = true;
             }
             //shartstorm 2 xDDDD
