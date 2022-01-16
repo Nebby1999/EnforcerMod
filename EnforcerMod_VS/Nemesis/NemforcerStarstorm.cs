@@ -82,7 +82,7 @@ namespace EnforcerPlugin
                 return new NemesisSpawnCard.StatModifier { fieldName = fieldName, modifier = modifier, statModifierType = statModifierType };
             }
             var spawnCard = ScriptableObject.CreateInstance<NemesisSpawnCard>();
-            spawnCard.prefab = NemforcerPlugin.minibossMaster; //TODO: new master prefab;
+            spawnCard.prefab = null; //TODO: new master prefab;
             spawnCard.sendOverNetwork = true;
             spawnCard.hullSize = RoR2.HullClassification.Human;
             spawnCard.nodeGraphType = MapNodeGroup.GraphType.Ground;
@@ -97,8 +97,9 @@ namespace EnforcerPlugin
 
             List<NemesisSpawnCard.StatModifier> modifiers = new List<NemesisSpawnCard.StatModifier>();
             modifiers.Add(CreateModifier("baseMaxHealth", 1000, NemesisSpawnCard.StatModifierType.Override));
-            modifiers.Add(CreateModifier("baseRegen", 0, NemesisSpawnCard.StatModifierType.Override));
-            modifiers.Add(CreateModifier("baseDamage", 11, NemesisSpawnCard.StatModifierType.Override));
+            modifiers.Add(CreateModifier("levelMaxHealth", 300, NemesisSpawnCard.StatModifierType.Override));
+            modifiers.Add(CreateModifier("baseDamage", 16, NemesisSpawnCard.StatModifierType.Override));
+            modifiers.Add(CreateModifier("levelDamage", 3.2f, NemesisSpawnCard.StatModifierType.Override));
             modifiers.Add(CreateModifier("baseCrit", 0, NemesisSpawnCard.StatModifierType.Override));
             spawnCard.statModifiers = modifiers.ToArray();
 
