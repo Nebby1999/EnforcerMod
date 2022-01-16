@@ -17,7 +17,7 @@ namespace EnforcerPlugin
 
         private static void CreateNemesis(CharacterMaster master, Xoroshiro128Plus rng)
         {
-            SpawnCard spawnCard = NemforcerSpawnCard.FromMaster(master);
+            SpawnCard spawnCard = NemesisSpawnCard.FromMaster(master);
             if (!spawnCard) return;
 
             CharacterMaster targetMaster = null;
@@ -99,18 +99,18 @@ namespace EnforcerPlugin
         }
     }
 
-    public class NemforcerSpawnCard : CharacterSpawnCard
+    public class NemesisSpawnCard : CharacterSpawnCard
     {
         private CharacterMaster characterMaster;
 
-        public static NemforcerSpawnCard FromMaster(CharacterMaster master)
+        public static NemesisSpawnCard FromMaster(CharacterMaster master)
         {
             if (!master) return null;
 
             CharacterBody body = master.bodyPrefab.GetComponent<CharacterBody>();
             if (!body) return null;
 
-            NemforcerSpawnCard spawnCard = ScriptableObject.CreateInstance<NemforcerSpawnCard>();
+            NemesisSpawnCard spawnCard = ScriptableObject.CreateInstance<NemesisSpawnCard>();
             spawnCard.hullSize = HullClassification.Human;
             spawnCard.nodeGraphType = (body.isFlying ? MapNodeGroup.GraphType.Air : MapNodeGroup.GraphType.Ground);
             spawnCard.prefab = MasterCatalog.GetMasterPrefab(MasterCatalog.FindAiMasterIndexForBody(body.bodyIndex));

@@ -80,9 +80,6 @@
     <Reference Include="MonoMod.Utils">
       <HintPath>libs\MonoMod.Utils.dll</HintPath>
     </Reference>
-    <Reference Include="MoonstormSharedUtils">
-      <HintPath>libs\MoonstormSharedUtils.dll</HintPath>
-    </Reference>
     <Reference Include="R2API">
       <HintPath>libs\R2API.dll</HintPath>
     </Reference>

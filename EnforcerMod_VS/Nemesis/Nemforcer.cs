@@ -76,9 +76,12 @@ namespace EnforcerPlugin {
 
         private static void StarstormCompat()
         {
-            //Yknow, i really hate how these classes are like 2k lines long. so i'll write the compat somewhere else.
-            //Neb
-            NemforcerStarstorm.Init();
+            Starstorm2.Cores.VoidCore.nemesisSpawns.Add(new Starstorm2.Cores.VoidCore.NemesisSpawnData
+            {
+                masterPrefab = NemforcerPlugin.minibossMaster,
+                itemDrop = RoR2Content.Items.Knurl,
+                musicString = ""
+            });
         }
 
         private static GameObject CreateModel(GameObject main, int index)
