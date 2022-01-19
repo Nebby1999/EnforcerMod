@@ -1,31 +1,16 @@
-﻿using System;
-using UnityEngine;
-using RoR2;
-using ModdedUnlockable = Enforcer.Modules.ModdedUnlockable;
+﻿using RoR2;
 using RoR2.Achievements;
 
-namespace EnforcerPlugin.Achievements {
+namespace EnforcerPlugin.Achievements
+{
 
-    public class RobitAchievement : ModdedUnlockable {
-        public override String AchievementIdentifier { get; } = "ENFORCER_ROBITUNLOCKABLE_ACHIEVEMENT_ID";
-        public override String UnlockableIdentifier { get; } = "ENFORCER_ROBITUNLOCKABLE_REWARD_ID";
-        public override String PrerequisiteUnlockableIdentifier { get; } = "ENFORCER_CHARACTERUNLOCKABLE_ACHIEVEMENT_ID";
-        public override String AchievementNameToken { get; } = "ENFORCER_ROBITUNLOCKABLE_ACHIEVEMENT_NAME";
-        public override String AchievementDescToken { get; } = "ENFORCER_ROBITUNLOCKABLE_ACHIEVEMENT_DESC";
-        public override String UnlockableNameToken { get; } = "ENFORCER_ROBITUNLOCKABLE_UNLOCKABLE_NAME";
+    public class RobitAchievement : GenericModdedUnlockable {
+        static string nig = "";
 
-        public override Sprite Sprite { get; } = Assets.MainAssetBundle.LoadAsset<Sprite>("texNemforcerEnforcer");
+        public override string AchievementTokenPrefix => "ENFORCER_ROBIT" + nig;
+        public override string PrerequisiteUnlockableIdentifier => "ENFORCER_CHARACTERUNLOCKABLE_ACHIEVEMENT_ID";
 
-        public override Func<string> GetHowToUnlock { get; } = (() => Language.GetStringFormatted("UNLOCK_VIA_ACHIEVEMENT_FORMAT", new object[]
-                            {
-                                Language.GetString("ENFORCER_ROBITUNLOCKABLE_ACHIEVEMENT_NAME"),
-                                Language.GetString("ENFORCER_ROBITUNLOCKABLE_ACHIEVEMENT_DESC")
-                            }));
-        public override Func<string> GetUnlocked { get; } = (() => Language.GetStringFormatted("UNLOCKED_FORMAT", new object[]
-                            {
-                                Language.GetString("ENFORCER_ROBITUNLOCKABLE_ACHIEVEMENT_NAME"),
-                                Language.GetString("ENFORCER_ROBITUNLOCKABLE_ACHIEVEMENT_DESC")
-                            }));
+        public override string AchievementSpriteName => "texNemforcerEnforcer";
 
         public override BodyIndex LookUpRequiredBodyIndex() {
             return BodyCatalog.FindBodyIndex("EnforcerBody");
@@ -57,7 +42,7 @@ namespace EnforcerPlugin.Achievements {
 
             public override void OnUninstall() {
                 base.OnUninstall();
-
+                
                 On.RoR2.CharacterMaster.RespawnExtraLife -= CheckRespawnExtraLife;
             }
 
@@ -69,7 +54,6 @@ namespace EnforcerPlugin.Achievements {
                 if (fucker) {
                     _applyingSkin = true;
                     base.Grant();
-                    //body.transform.modelskin.apply(2) please
 
                     On.RoR2.ModelSkinController.ApplySkin += ModelSkinController_ApplySkin;
                 }
@@ -80,11 +64,10 @@ namespace EnforcerPlugin.Achievements {
                 //bool fucker = base.GetCurrentBody() == self.GetComponent<CharacterModel>().body;
                 if (_applyingSkin) {
                     skinIndex = 2;
-
+                    self.characterModel.body.GetComponent<EnforcerNetworkComponent>().RpcUhh(2);
                     On.RoR2.ModelSkinController.ApplySkin -= ModelSkinController_ApplySkin;
                 }
                 orig(self, skinIndex);
-
             }
         }
     }

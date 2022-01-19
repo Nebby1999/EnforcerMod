@@ -3,7 +3,7 @@
 - Includes a bunch of unlockable alternate skills ~~and skins~~
 - Includes support for Ancient Scepter ~~and most modded items~~
 
-[![](https://cdn.discordapp.com/attachments/469291841859092488/830928468367114281/unknown.png)]()
+[![](https://i.imgur.com/mQNrhfH.png)]()
 
 [![](https://cdn.discordapp.com/attachments/739704939671978024/787500376793677844/screen1.png)]()
 [![](https://cdn.discordapp.com/attachments/739704939671978024/787500388198514728/screen2.png)]()
@@ -11,6 +11,7 @@
 [![](https://cdn.discordapp.com/attachments/739696016755785859/828394816986808360/EnfuckerIcon.png)]()
 
 Join the discord server to share any feedback/bugs/suggestions- https://discord.gg/HpQB9fC
+Or ping/message me directly (TheTimesweeper#5727) with all the nastiest feedback you can think of
 
 ## Credits
 Gnome - Coding  
@@ -26,7 +27,8 @@ Paysus - Animations
 Violet Chaolan - Sounds  
 LucidInceptor (2cute2game) - Modeling  
 SalvadorBunny - Heavy TF2 Minecraft skin  
-Destructor - Original mod icon, help 
+Destructor - Original mod icon, help  
+Nebby - Help  
 Reithierion - New mod icon  
 Draymarc - Concepts  
 Lethan - Screenshots  
@@ -65,14 +67,83 @@ lil out of date
 - More alternate skill(s)
 - Skills++ support
 - Other things 100% decided on pure whimsy
+- Readding everything
 - Fixing this fucker
 - Help
 
 ## Changelog
+`3.2.6`
+ - holy shit vr
+   - barebones initial implementation thanks to drbibop (the vr mod guy himself)
+ - tweaked shield hurtbox and added additional shield hurtbox closer to enforcer 
+   - to hopefully make blocking more consistent.
+   - still less powerful than before, but more consistent to use
+
+`3.2.5`
+ - fixed some item displays, what little I had time to do
+ - featuring actually working goat hoof!
+ - last small update I promise. I had my fun
+
+`3.2.4`
+   - Ok actually made hopoo feather display smaller this time.
+   - fix bug with heat crash spending all your stacks
+   - Adjusted enforcer's shield hurtbox.
+     - it was way too big. Would basically block everything in a 180 degree radius and then some, making it very easy to back against a wall and block everything
+     - this gives room for you to get hit on the sides. you must now be more mindful of positioning and repositioning
+     - tl;dr don't be a bussy
+   - fixed all weapons showing in logbook
+   - fixed css audio
+   - removed an achievement that wasn't supposed to be there yet don't tell nobody
+
+`3.2.3`
+   - Adjusted Hopoo Feather display. Let me know if you like it and especially if you don't.
+
+`3.2.2`
+   - woops king dedede gone
+
+`3.2.1`
+   - added to previous changelog I forgot to say
+   - fixed networking on n4cr achievement
+   - readded stun grenade achievement. forgot that one in 3.1
+   - fixed masteries grandmasteries being implemented in the most retarded way
+     - thanks neb for the prototype
+     - grandmastery skin(s) no longer require starstorm after unlocked
+   - spent way too much time figuring out the [visions of heresy thing]
+   - made shield go away with essence of heresy
+   - added some footsteps
+   - fixed visuals on heavy tf2's minigun m2 exploding projectiles
+   - fixed king dedede boss ragdoll
+   - added placeholder item displays. They are very jank
+     - if anyone wants to do the item displays that'd be lovely
+   
 `3.2.0`
- - fixed skills not being saved on exit (thanks DestroyedClone for bringing order to the chaos)
- - super shotgun time fastor
- - fixed beefstop
+ - <ins>Slowly but surely he's coming back</ins>
+   - Rig has been fixed and finalized, still a long road but we're on our way
+     - Readded true Mastery skin: ~~Sexforcer~~ Peacekeeper on new rig
+       - Mastery Achievement reset to celebrate!
+     - N4CR skin moved to its own achievement: We Have the Technology
+     - Added classic skin on new rig
+   - Animations on new rig are a mix of 
+     - new and redone, old ones updated, old ones salvaged to work but janky
+   - Readded Gun models for each m1 weapon (using classic guns for now)
+     - Guns also appear in css when switching
+   - Readded cursed config (wip) skills: Breaching Hammer and Skateboard 
+     - (yes, rob added a fucking skateboard before and it's back)
+   - Readded a few item displays
+     - Remade framework for gun-unique item displays
+     - someone do the rest pls
+     - New Aetherium item displays have been added by Komrade on his end. Say thank you!
+ - <ins>Other stuff</ins>
+   - after a year, deflecting golem lasers is now networked
+     - redid the logic a bit, can't tell if it's more or less janky than before
+     - added absolutely disgusting hacky code to deflect lasers from stone wisps in nebby's monster variants
+   - made machine gun scale past framerate (did you know fire rate maxed at 50 syringes?)
+     - also made minigun scale past framerate (did you know fire rate maxed at 20 syringes?)
+   - after like two fuckin years, fixed the animator pausing terribly when stopping while shooting 
+ - <ins>On this episode of I had much more important shit to do but I did this instead</ins>
+   - skillsplusplus (default m1 only for now)
+   - added gordo projectile replacement to dedede skin
+   - fixed head size config
 
 `3.1.2`
  - fixed force unlock not working for bebbys

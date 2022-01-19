@@ -21,7 +21,8 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-namespace EnforcerPlugin {
+namespace EnforcerPlugin
+{
 
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("com.DestroyedClone.AncientScepter", BepInDependency.DependencyFlags.SoftDependency)]
@@ -32,7 +33,7 @@ namespace EnforcerPlugin {
     [BepInDependency("com.cwmlolzlz.skills", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.KingEnderBrine.ItemDisplayPlacementHelper", BepInDependency.DependencyFlags.SoftDependency)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
-    [BepInPlugin(MODUID, "Enforcer", "3.2.0")]
+    [BepInPlugin(MODUID, "Enforcer", "3.2.5")]
     [R2APISubmoduleDependency(new string[]
     {
         "PrefabAPI",
@@ -44,7 +45,7 @@ namespace EnforcerPlugin {
     public class EnforcerModPlugin : BaseUnityPlugin
     {
         public const string MODUID = "com.EnforcerGang.Enforcer";
-
+        
         public const string characterName = "Enforcer";
         public const string characterSubtitle = "Unwavering Bastion";
         public const string characterOutro = "..and so he left, unsure of his title as protector.";
@@ -53,7 +54,7 @@ namespace EnforcerPlugin {
 
         public static EnforcerModPlugin instance;
 
-        public static bool nemesisEnabled = true;
+        public static bool holdonasec = true;
 
         internal static List<GameObject> bodyPrefabs = new List<GameObject>();
         internal static List<GameObject> masterPrefabs = new List<GameObject>();
@@ -111,6 +112,7 @@ namespace EnforcerPlugin {
         public static bool supplyDropInstalled = false;
         public static bool starstormInstalled = false;
         public static bool skillsPlusInstalled = false;
+        public static bool IDPHelperInstalled = false;
 
         //public static uint doomGuyIndex = 2;
         //public static uint engiIndex = 3;
@@ -149,7 +151,6 @@ namespace EnforcerPlugin {
 
             //touch this all you want tho
             Modules.Config.ConfigShit(this);
-            //ConfigShit();
             Modules.States.FixStates();
             Assets.PopulateAssets();
             SetupModCompat();
@@ -169,7 +170,7 @@ namespace EnforcerPlugin {
             CreateDoppelganger();
             CreateCrosshair();
 
-            if (nemesisEnabled) new NemforcerPlugin().Init();
+            new NemforcerPlugin().Init();
 
             Hook();
             //new Modules.ContentPacks().CreateContentPack();
@@ -202,18 +203,21 @@ namespace EnforcerPlugin {
             if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.TeamMoonstorm.Starstorm2")) {
                 starstormInstalled = true;
             }
-            //shartstorm 2 xDDDD
+            //skillsplus
             if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.cwmlolzlz.skills")) {
                 skillsPlusInstalled = true;
                 SkillsPlusCompat.init();
-
+            }
+            //weapon idrs
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.ItemDisplayPlacementHelper")) {
+                IDPHelperInstalled = true;
             }
         }
 
         private void ContentManager_onContentPacksAssigned(HG.ReadOnlyArray<RoR2.ContentManagement.ReadOnlyContentPack> obj)
         {
             EnforcerItemDisplays.RegisterDisplays();
-            if (nemesisEnabled) NemItemDisplays.RegisterDisplays();
+            NemItemDisplays.RegisterDisplays();
 
         }
 
@@ -257,7 +261,8 @@ namespace EnforcerPlugin {
             On.RoR2.MapZone.TryZoneStart += MapZone_TryZoneStart;
             On.RoR2.HealthComponent.Suicide += HealthComponent_Suicide;
             //On.RoR2.TeleportOutController.OnStartClient += TeleportOutController_OnStartClient;
-            //On.EntityStates.Global.Skills.LunarNeedle.FireLunarNeedle.OnEnter += FireLunarNeedle_OnEnter;
+            On.EntityStates.GlobalSkills.LunarNeedle.FireLunarNeedle.OnEnter += FireLunarNeedle_OnEnter;
+            On.RoR2.EntityStateMachine.SetState += EntityStateMachine_SetState;
         }
 
         #region Hooks
@@ -612,7 +617,7 @@ namespace EnforcerPlugin {
                     var weaponComponent = self.GetBody().GetComponent<EnforcerWeaponComponent>();
                     if (weaponComponent)
                     {
-                        weaponComponent.DelayedResetWeapon();
+                        weaponComponent.DelayedResetWeaponsAndShields();
                         weaponComponent.ModelCheck();
                     }
                 }
@@ -715,37 +720,15 @@ namespace EnforcerPlugin {
             orig(self, info);
         }
 
-        private void FireLaser_OnEnter(On.EntityStates.GolemMonster.FireLaser.orig_OnEnter orig, EntityStates.GolemMonster.FireLaser self) {
-
-            orig(self);
-
-            var ray = self.modifiedAimRay;
-
-            CheckEnforcerParry(ray);
-        }
-
-        private static void CheckEnforcerParry(Ray ray) {
-            RaycastHit raycastHit;
-
-            if (Physics.Raycast(ray, out raycastHit, 1000f, LayerIndex.world.mask | LayerIndex.defaultLayer.mask | LayerIndex.entityPrecise.mask)) {
-                //do I have this power?
-                GameObject gob = raycastHit.transform.GetComponent<HurtBox>()?.healthComponent.gameObject;
-
-                if (!gob) {
-                    gob = raycastHit.transform.GetComponent<HealthComponent>()?.gameObject;
-                }
-                //I believe I do. it makes the decompiled version look mad ugly tho
-                EnforcerComponent enforcer = gob?.GetComponent<EnforcerComponent>();
-
-                Debug.LogWarning($"tran {raycastHit.transform}, " +
-                    $"hurt {raycastHit.transform.GetComponent<HurtBox>()}, " +
-                    $"health {raycastHit.transform.GetComponent<HurtBox>()?.healthComponent.gameObject}, " +
-                    $"{gob?.GetComponent<EnforcerComponent>()}");
-
-                if (enforcer) {
-                    enforcer.invokeOnLaserHitEvent();
-                }
+        private void EntityStateMachine_SetState(On.RoR2.EntityStateMachine.orig_SetState orig, EntityStateMachine self, EntityState newState)
+        {
+            
+            if(self.commonComponents.characterBody?.bodyIndex == BodyCatalog.FindBodyIndex("EnforcerBody"))
+            {
+                if (newState is EntityStates.GlobalSkills.LunarNeedle.FireLunarNeedle)
+                    newState = new FireNeedler();
             }
+            orig(self, newState);
         }
 
         private void BaseState_OnEnter(On.EntityStates.BaseState.orig_OnEnter orig, BaseState self) {
@@ -755,15 +738,48 @@ namespace EnforcerPlugin {
                 self.damageStat *= 5f;
             }
 
-
-            List<string> incrediblyhorriblehackynamecheck = new List<string> {
+            List<string> absolutelydisgustinghackynamecheck = new List<string> {
                 "NebbysWrath.VariantEntityStates.LesserWisp.FireStoneLaser",
                 "NebbysWrath.VariantEntityStates.GreaterWisp.FireDoubleStoneLaser",
             };
 
-            if (incrediblyhorriblehackynamecheck.Contains(self.GetType().ToString())) {
+            if (absolutelydisgustinghackynamecheck.Contains(self.GetType().ToString())) {
 
                 CheckEnforcerParry(self.GetAimRay());
+            }
+        }
+
+        private void FireLaser_OnEnter(On.EntityStates.GolemMonster.FireLaser.orig_OnEnter orig, EntityStates.GolemMonster.FireLaser self)
+        {
+            orig(self);
+
+            Ray ray = self.modifiedAimRay;
+
+            CheckEnforcerParry(ray);
+        }
+
+        private static void CheckEnforcerParry(Ray ray) {
+
+            RaycastHit raycastHit;
+
+            if (Physics.Raycast(ray, out raycastHit, 1000f, LayerIndex.world.mask | LayerIndex.defaultLayer.mask | LayerIndex.entityPrecise.mask)) {
+                                                                             //do I have this power?
+                GameObject gob = raycastHit.transform.GetComponent<HurtBox>()?.healthComponent.gameObject;
+
+                if (!gob) {
+                    gob = raycastHit.transform.GetComponent<HealthComponent>()?.gameObject;
+                }
+                                                //I believe I do. it makes the decompiled version look mad ugly tho
+                EnforcerComponent enforcer = gob?.GetComponent<EnforcerComponent>();
+
+                //Debug.LogWarning($"tran {raycastHit.transform}, " +
+                //    $"hurt {raycastHit.transform.GetComponent<HurtBox>()}, " +
+                //    $"health {raycastHit.transform.GetComponent<HurtBox>()?.healthComponent.gameObject}, " +
+                //    $"{gob?.GetComponent<EnforcerComponent>()}");
+
+                if (enforcer) {
+                    enforcer.invokeOnLaserHitEvent();
+                }
             }
         }
 
@@ -771,15 +787,16 @@ namespace EnforcerPlugin {
         {
             // this actually didn't work, hopefully someone else can figure it out bc needler shotgun sounds badass
             // don't forget to register the state if you do :^)
-            if (self.outer.commonComponents.characterBody)
+            if (false)//self.outer.commonComponents.characterBody)
             {
-                if (self.outer.commonComponents.characterBody.baseNameToken == "ENFORCER_NAME")
+                if (self.outer.commonComponents.characterBody.bodyIndex == BodyCatalog.FindBodyIndex("EnforcerBody"))
                 {
                     self.outer.SetNextState(new FireNeedler());
+                    Debug.Log("uh");
                     return;
                 }
             }
-
+            
             orig(self);
         }
 
@@ -791,7 +808,7 @@ namespace EnforcerPlugin {
                 if (GameObject.Find("EscapeSequenceController")) {
                     if (GameObject.Find("EscapeSequenceController").transform.Find("EscapeSequenceObjects")) {
                         if (GameObject.Find("EscapeSequenceController").transform.Find("EscapeSequenceObjects").transform.Find("SmoothFrog")) {
-                            GameObject.Find("EscapeSequenceController").transform.Find("EscapeSequenceObjects").transform.Find("SmoothFrog").gameObject.AddComponent<EnforcerFrogComponent>();
+                            GameObject.Find("EscapeSequenceController").transform.Find("EscapeSequenceObjects").transform.Find("SmoothFrog").gameObject.AddComponent<FrogComponent>();
                         }
                     }
                 }
@@ -935,6 +952,14 @@ namespace EnforcerPlugin {
             CharacterModel characterModel = model.AddComponent<CharacterModel>();
             characterModel.body = null;
 
+            //let's set up rendereinfos in editor man
+            //for (int i = 0; i < characterModel.baseRendererInfos.Length; i++)
+            //{
+            //    CharacterModel.RendererInfo rendererInfo = characterModel.baseRendererInfos[i];
+            
+            //    rendererInfo.defaultMaterial = Assets.CloneMaterial(rendererInfo.defaultMaterial);
+            //}
+
             characterModel.baseRendererInfos = new CharacterModel.RendererInfo[]
             {
                 new CharacterModel.RendererInfo
@@ -961,7 +986,7 @@ namespace EnforcerPlugin {
                 },
                 new CharacterModel.RendererInfo
                 {
-                    defaultMaterial = Assets.CreateMaterial("matEnforcerGun", 0f, Color.black, 0f),
+                    defaultMaterial = Assets.CreateMaterial("matEnforcerGun", 1f, Color.white, 0f),
                     renderer = childLocator.FindChild("GunModel").gameObject.GetComponent<SkinnedMeshRenderer>(),
                     defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On,
                     ignoreOverlays = false
@@ -1011,7 +1036,7 @@ namespace EnforcerPlugin {
 
             characterDisplay = PrefabAPI.InstantiateClone(model, "EnforcerDisplay", true);
 
-            characterDisplay.AddComponent<MenuSound>();
+            characterDisplay.AddComponent<MenuSoundComponent>();
             characterDisplay.AddComponent<EnforcerLightController>();
             characterDisplay.AddComponent<EnforcerLightControllerAlt>();
 
@@ -1106,8 +1131,9 @@ namespace EnforcerPlugin {
             bodyComponent.skinIndex = 0U;
             bodyComponent.bodyColor = characterColor;
             bodyComponent.spreadBloomDecayTime = 0.7f;
-
+            
             Modules.States.AddSkill(typeof(EnforcerMain));
+            Modules.States.AddSkill(typeof(FireNeedler));
 
             EntityStateMachine stateMachine = bodyComponent.GetComponent<EntityStateMachine>();
             stateMachine.mainStateType = new SerializableEntityStateType(typeof(EnforcerMain));
@@ -1217,7 +1243,7 @@ namespace EnforcerPlugin {
                 },
                 new CharacterModel.RendererInfo
                 {
-                    defaultMaterial = Assets.CreateMaterial("matEnforcerGun", 0f, Color.black, 0f),
+                    defaultMaterial = Assets.CreateMaterial("matEnforcerGun", 1f, Color.white, 0f),
                     renderer = childLocator.FindChild("GunModel").gameObject.GetComponent<SkinnedMeshRenderer>(),
                     defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On,
                     ignoreOverlays = false
@@ -1264,7 +1290,9 @@ namespace EnforcerPlugin {
 
             characterModel.mainSkinnedMeshRenderer = childLocator.FindChild("Model").gameObject.GetComponent<SkinnedMeshRenderer>();
 
-            characterModel.gameObject.AddComponent<EnforcerWeaponDisplaysComponent>();
+            if (IDPHelperInstalled) {
+                characterModel.gameObject.AddComponent<EnforcerItemDisplayEditorComponent>();
+            }
 
             childLocator.FindChild("Chair").GetComponent<MeshRenderer>().material = Assets.CreateMaterial("matChair", 0f, Color.black, 0f);
 
@@ -1335,7 +1363,7 @@ namespace EnforcerPlugin {
 
             HurtBoxGroup hurtBoxGroup = model.AddComponent<HurtBoxGroup>();
 
-            HurtBox mainHurtbox = model.transform.Find("MainHurtbox").GetComponent<CapsuleCollider>().gameObject.AddComponent<HurtBox>();
+            HurtBox mainHurtbox = model.transform.Find("MainHurtbox").gameObject.AddComponent<HurtBox>();
             mainHurtbox.gameObject.layer = LayerIndex.entityPrecise.intVal;
             mainHurtbox.healthComponent = healthComponent;
             mainHurtbox.isBullseye = true;
@@ -1351,12 +1379,22 @@ namespace EnforcerPlugin {
             shieldHurtbox.damageModifier = HurtBox.DamageModifier.Barrier;
             shieldHurtbox.hurtBoxGroup = hurtBoxGroup;
             shieldHurtbox.indexInGroup = 1;
-            shieldHurtbox.gameObject.SetActive(false);
+
+            HurtBox shieldHurtbox2 = childLocator.FindChild("ShieldHurtbox2").gameObject.AddComponent<HurtBox>();
+            shieldHurtbox2.gameObject.layer = LayerIndex.entityPrecise.intVal;
+            shieldHurtbox2.healthComponent = healthComponent;
+            shieldHurtbox2.isBullseye = false;
+            shieldHurtbox2.damageModifier = HurtBox.DamageModifier.Barrier;
+            shieldHurtbox2.hurtBoxGroup = hurtBoxGroup;
+            shieldHurtbox2.indexInGroup = 1;
+
+            childLocator.FindChild("ShieldHurtboxParent").gameObject.SetActive(false);
 
             hurtBoxGroup.hurtBoxes = new HurtBox[]
             {
                 mainHurtbox,
-                shieldHurtbox
+                shieldHurtbox,
+                shieldHurtbox2
             };
 
             hurtBoxGroup.mainHurtBox = mainHurtbox;
@@ -1476,7 +1514,7 @@ namespace EnforcerPlugin {
                                                   characterDisplay, 
                                                   "ENFORCER",
                                                   Modules.Config.forceUnlock.Value? null : EnforcerUnlockables.enforcerUnlockableDef, 
-                                                  4.005f);
+                                                  5.1f);
 
             SkillSetup();
             
@@ -1485,7 +1523,7 @@ namespace EnforcerPlugin {
 
         private void RegisterProjectile()
         {
-            //i'm the treasure, baby, i'm the prize
+            //i'm the treasure, baby, i'm the prize, i'm yours forever
             
             stunGrenade = Resources.Load<GameObject>("Prefabs/Projectiles/CommandoGrenadeProjectile").InstantiateClone("EnforcerStunGrenade", true);
 
@@ -1882,6 +1920,10 @@ namespace EnforcerPlugin {
                 BaseUnityPlugin.DestroyImmediate(ai);
             }
 
+            BaseAI baseAI = doppelganger.GetComponent<BaseAI>();
+            baseAI.aimVectorMaxSpeed = 60;
+            baseAI.aimVectorDampTime = 0.15f;
+
             AISkillDriver exitShieldDriver = doppelganger.AddComponent<AISkillDriver>();
             exitShieldDriver.customName = "ExitShield";
             exitShieldDriver.movementType = AISkillDriver.MovementType.Stop;
@@ -2167,7 +2209,7 @@ namespace EnforcerPlugin {
             Modules.Skills.RegisterSkillDef(utilityDef2, typeof(StunGrenade));
 
             SkillFamily.Variant utilityVariant1 = Modules.Skills.SetupSkillVariant(utilityDef1);
-            SkillFamily.Variant utilityVariant2 = Modules.Skills.SetupSkillVariant(utilityDef2, null);
+            SkillFamily.Variant utilityVariant2 = Modules.Skills.SetupSkillVariant(utilityDef2, EnforcerUnlockables.enforcerStunGrenadeUnlockableDef);
 
             _skillLocator.utility = Modules.Skills.RegisterSkillsToFamily(characterPrefab, "EnforcerUtility", utilityVariant1, utilityVariant2);
         }
@@ -2229,7 +2271,7 @@ namespace EnforcerPlugin {
         #region skilldefs
         private SkillDef PrimarySkillDef_RiotShotgun()
         {
-            string desc = "Fire a short-range blast that <style=cIsUtility>pierces</style> for <style=cIsDamage>" + Modules.Config.shotgunBulletCount.Value + "x" + 100f * Modules.Config.shotgunDamage.Value + "% damage.";
+            string desc = "Fire a short-range blast that <style=cIsUtility>pierces</style> for <style=cIsDamage>" + Modules.Config.shotgunBulletCount.Value + "x" + 100f * Modules.Config.shotgunDamage.Value + "% damage.</style>";
 
             LanguageAPI.Add("ENFORCER_PRIMARY_SHOTGUN_NAME", "Riot Shotgun");
             LanguageAPI.Add("ENFORCER_PRIMARY_SHOTGUN_DESCRIPTION", desc);
@@ -2444,7 +2486,7 @@ namespace EnforcerPlugin {
             stunGrenadeDef.activationState = new SerializableEntityStateType(typeof(StunGrenade));
             stunGrenadeDef.activationStateMachineName = "Weapon";
             stunGrenadeDef.baseMaxStock = 3;
-            stunGrenadeDef.baseRechargeInterval = 8f;
+            stunGrenadeDef.baseRechargeInterval = 7f;
             stunGrenadeDef.beginSkillCooldownOnSkillEnd = false;
             stunGrenadeDef.canceledFromSprinting = false;
             stunGrenadeDef.fullRestockOnAssign = true;
@@ -2676,10 +2718,11 @@ namespace EnforcerPlugin {
         private void CSSPreviewSetup()
         {
             //something broke here i don't really understand it
-            //  that's because holy shit i wrote this like a fucking ape. do not forgive me for this
+            //  that's because holy shit i wrote this like a fucking ape. do not forgive me for this. I'm deleting it
 
             //// NULLCHECK YOUR SHIT FOR FUCKS SAKE
                 //nullchecks are only for the unsure
+                //also this is a not-null check. do return; n00b
             if (_previewController)
             {
                 List<int> emptyIndices = new List<int>();
@@ -2709,13 +2752,12 @@ namespace EnforcerPlugin {
         {
             Type[] memes = new Type[]
             {
-                typeof(DefaultDance),
-                typeof(Floss),
-                typeof(FLINTLOCKWOOD),
                 typeof(SirenToggle),
-                typeof(NemesisRest),
+                typeof(DefaultDance),
+                typeof(FLINTLOCKWOOD),
+                typeof(Rest),
+                typeof(Enforcer.Emotes.EnforcerSalute),
                 typeof(EntityStates.Nemforcer.Emotes.Salute),
-                typeof(Enforcer.Emotes.EnforcerSalute)
             };
               
             for (int i = 0; i < memes.Length; i++)
@@ -2724,213 +2766,6 @@ namespace EnforcerPlugin {
             }
         }
     }
-    #endregion
 
-    public class MenuSound : MonoBehaviour
-    {
-        private uint playID;
-
-        private void OnEnable()
-        {
-            //this.playID = Util.PlaySound(Sounds.CharSelect, base.gameObject);
-
-            var i = GetComponentInChildren<EnforcerLightController>();
-            if (i)
-            {
-                i.FlashLights(3);
-            }
-
-            var j = GetComponentInChildren<EnforcerLightControllerAlt>();
-            if (j)
-            {
-                j.ToggleSiren();
-            }
-        }
-
-        private void OnDestroy()
-        {
-            if (this.playID != 0) AkSoundEngine.StopPlayingID(this.playID);
-        }
-    }
-
-    public class EnforcerFrogComponent : MonoBehaviour
-    {
-        public static event Action<bool> FrogGet = delegate { };
-        
-        private void Awake()
-        {
-            InvokeRepeating("Sex", 0.5f, 0.5f);
-        }
-
-        private void Sex()
-        {
-            Collider[] array = Physics.OverlapSphere(transform.position, 16, LayerIndex.defaultLayer.mask);
-            for (int i = 0; i < array.Length; i++)
-            {
-                CharacterBody component = array[i].GetComponent<CharacterBody>();
-                if (component)
-                {
-                    if (component.baseNameToken == "ENFORCER_NAME") FrogGet(true);
-                }
-            }
-        }
-    }
-
-    public class ParticleFuckingShitComponent : MonoBehaviour
-    {
-        private void Start()
-        {
-            this.transform.parent = null;
-            this.gameObject.AddComponent<DestroyOnTimer>().duration = 8;
-        }
-    }
-
-    public class TearGasComponent : MonoBehaviour
-    {
-        private int count;
-        private int lastCount;
-        private uint playID;
-
-        public static event Action<int> GasCheck = delegate { };
-
-        private void Awake()
-        {
-            playID = Util.PlaySound(Sounds.GasContinuous, base.gameObject);
-
-            InvokeRepeating("Fuck", 0.25f, 0.25f);
-        }
-
-        private void Fuck()
-        {
-            //this is gross and hacky pls someone do this a different way eventually
-
-            count = 0;
-
-            foreach(CharacterBody i in GameObject.FindObjectsOfType<CharacterBody>())
-            {
-                if (i && i.HasBuff(Modules.Buffs.impairedBuff)) count++;
-            }
-
-            if (lastCount != count) GasCheck(count);
-
-            lastCount = count;
-        }
-
-        private void OnDestroy()
-        {
-            AkSoundEngine.StopPlayingID(playID);
-        }
-    }
-
-    public static class Sounds
-    {
-        public static readonly string CharSelect = "Play_Enforcer_CharSelect";
-
-        public static readonly string FireShotgun = "Play_RiotShotgun_shoot"; //Shotgun_shot
-        public static readonly string FireShotgunCrit = "Play_RiotShotgun_Crit"; //Shotgun_shot_crit
-        public static readonly string FireClassicShotgun = "Ror1_Shotgun";
-
-        public static readonly string FireSuperShotgun = "Super_Shotgun";
-        public static readonly string FireSuperShotgunCrit = "Super_Shotgun_crit";
-        public static readonly string FireSuperShotgunDOOM = "Doom_2_Super_Shotgun";
-        public static readonly string FireSuperShotgunSingle = "Play_SSG_single";
-        public static readonly string FireSuperShotgunSingleCrit = "Play_SSG_single_crit";
-
-        public static readonly string FireAssaultRifleSlow = "Assault_Shots_1";
-        public static readonly string FireAssaultRifleFast = "Assault_Shots_2";
-
-        public static readonly string FireBlasterShotgun = "Blaster_Shotgun";
-        public static readonly string FireBlasterRifle = "Blaster_Rifle";
-
-        public static readonly string FireBungusShotgun = "Bungus_Riot";
-        public static readonly string FireBungusSSG = "Bungus_SSg";
-        public static readonly string FireBungusRifle = "Bungus_AR";
-
-        public static readonly string ShieldBash = "Bash";
-        public static readonly string BashHitEnemy = "Bash_Hit_Enemy";
-        public static readonly string BashDeflect = "Bash_Deflect"; //"Play_Reflect_Ding"
-        public static readonly string SirenDeflect = "Play_Siren_Reflect";
-
-        public static readonly string ShoulderBashHit = "Shoulder_Bash_Hit";
-
-        public static readonly string LaunchStunGrenade = "Launch_Stun";
-        public static readonly string StunExplosion = "Stun_Explosion";
-
-        public static readonly string LaunchTearGas = "Launch_Gas";
-        public static readonly string GasExplosion = "Gas_Explosion";
-        public static readonly string GasContinuous = "Gas_Continous";
-
-        public static readonly string ShieldUp = "R_up";
-        public static readonly string ShieldDown = "R_down";
-
-        public static readonly string ShieldBlockLight = "Shield_Block_light";
-        public static readonly string ShieldBlockHeavy = "Shield_Block_heavy";
-
-        public static readonly string EnergyShieldUp = "Energy_R_Up";
-        public static readonly string EnergyShieldDown = "Energy_R_down";
-
-        public static readonly string ShellHittingFloor = "Shell_Hitting_floor";
-        public static readonly string ShellHittingFloorFast = "Shell_Hitting_Floor_Fast";
-        public static readonly string ShellHittingFloorSlow = "Shell_Hitting_Floor_Slow";
-
-        public static readonly string NemesisSwing = "Play_Heavy_Swing";
-        public static readonly string NemesisImpact = "Play_Heavy_Swing_Hit";
-        public static readonly string NemesisSwing2 = "Play_HammerswingNewL";
-        public static readonly string NemesisImpact2 = "Play_NemHammerImpact";
-        public static readonly string NemesisSwingSecondary = "Play_NemSwingSecondary";
-
-        public static readonly string NemesisSwingAxe = "NemforcerAxeSwing";
-        public static readonly string NemesisImpactAxe = "NemforcerAxeHit";
-        
-        public static readonly string NemesisStartCharge = "Play_chargeStart";
-        public static readonly string NemesisMaxCharge = "Play_chargeMax";
-        public static readonly string NemesisFlameLoop = "Play_HammerFlameLoop";
-        public static readonly string NemesisFlameBurst = "Play_Hammer_Slam";
-        public static readonly string NemesisSwingL = "Play_Heavy_Swing_L";
-        public static readonly string NemesisSmash = "Play_Hammer_Smash";
-
-        public static readonly string NemesisGrenadeThrow = "Play_GrenadeThrow";
-
-        public static readonly string NemesisMinigunSheathe = "Play_MinigunSheathe";
-        public static readonly string NemesisMinigunUnsheathe = "Play_MinigunUnsheathe";
-        public static readonly string NemesisMinigunWindDown = "Play_minigun_wind_down";
-        public static readonly string NemesisMinigunWindUp = "Play_minigun_wind_up";
-        public static readonly string NemesisMinigunShooting = "Play_Minigun_Shoot";
-
-        public static readonly string NemesisMinigunSpinUp = "NemforcerMinigunSpinUp";
-        public static readonly string NemesisMinigunSpinDown = "NemforcerMinigunSpinDown";
-        public static readonly string NemesisMinigunLoop = "NemforcerMinigunLoop";
-
-        public static readonly string DeathSound = "Death_Siren";
-        public static readonly string SirenButton = "Siren_Button";
-        public static readonly string SirenSpawn = "Siren_Spawn";
-        public static readonly string Croak = "Croak_siren";
-        public static readonly string HomeRun = "Play_Home_Run_Bat_Hit";
-        public static readonly string Bonk = "Play_Bonk";
-
-        public static readonly string DefaultDance = "Default_forcer";
-        public static readonly string Floss = "Flossforcer";
-        public static readonly string InfiniteDab = "Infiniforcer";
-        public static readonly string DOOM = "DOOM";
-        public static readonly string MioHonda = "Mio_Honda";
-
-        public static readonly string SkateGrind = "grindmetal03";
-        public static readonly string SkateLand = "Landing";
-        public static readonly string SkateOllie = "Ollie";
-        public static readonly string Skate180 = "Play_180";
-        public static readonly string SkateRoll = "rollconcrete02";
-        //rtcp - Skateboard_Speed
-
-        public static readonly string SkamteJumpGap = "HUD_jumpgap";
-        public static readonly string SkamteScore = "HUD_score";
-        public static readonly string SkamtePerfectTrick = "HUD_perfecttrick";
-        public static readonly string SkamteSpecialTrick = "HUD_specialtrick";
-
-        public static readonly string DededeSwing = "Play_se_dedede_hammer_swing_m";
-        public static readonly string DededeImpactS = "Play_dedede_hammer_attack_m";
-        public static readonly string DededeImpactL = "Play_dedede_hammer_attack_l";
-
-        public static readonly string HMGShoot = "Play_HMG_shoot";
-        public static readonly string HMGCrit = "Play_HMG_crit";
-    }
+#endregion
 }

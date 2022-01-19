@@ -7,6 +7,7 @@ using RoR2;
 using RoR2.Audio;
 using System.Collections.Generic;
 using EnforcerPlugin.Modules;
+using System.Linq;
 
 namespace EnforcerPlugin {
     public static class Assets
@@ -86,6 +87,7 @@ namespace EnforcerPlugin {
         public static GameObject nemImpactFX;
         public static GameObject nemHeavyImpactFX;
         public static GameObject nemAxeImpactFX;
+        public static GameObject nemAxeImpactFXVertical;
 
         public static GameObject gatDrone;
 
@@ -259,8 +261,8 @@ namespace EnforcerPlugin {
             shotgunShell = MainAssetBundle.LoadAsset<GameObject>("ShotgunShell");
             superShotgunShell = MainAssetBundle.LoadAsset<GameObject>("SuperShotgunShell");
 
-            shotgunShell.AddComponent<Enforcer.EnforcerShellController>();
-            superShotgunShell.AddComponent<Enforcer.EnforcerShellController>();
+            shotgunShell.AddComponent<Enforcer.ShotgunShellController>();
+            superShotgunShell.AddComponent<Enforcer.ShotgunShellController>();
 
             shieldBashFX = Assets.LoadEffect("ShieldBashFX", "", MainAssetBundle);
             shoulderBashFX = Assets.LoadEffect("ShoulderBashFX", "", MainAssetBundle);
@@ -284,6 +286,7 @@ namespace EnforcerPlugin {
             nemImpactFX = Assets.LoadEffect("ImpactNemforcer", "", MainAssetBundle);
             nemHeavyImpactFX = Assets.LoadEffect("HeavyImpactNemforcer", "", MainAssetBundle);
             nemAxeImpactFX = Assets.LoadEffect("ImpactNemforcerAxe", "", MainAssetBundle);
+            nemAxeImpactFXVertical = Assets.LoadEffect("ImpactNemforcerAxe_Vertical", "", MainAssetBundle);
 
             gatDrone = MainAssetBundle.LoadAsset<GameObject>("GatDrone");
 
@@ -355,6 +358,23 @@ namespace EnforcerPlugin {
             return CreateMaterial(Assets.MainAssetBundle, materialName, emission, emissionColor, normalStrength);
         }
 
+        public static Material CloneMaterial(Material tempMat)
+        {
+            if (!commandoMat) commandoMat = Resources.Load<GameObject>("Prefabs/CharacterBodies/CommandoBody").GetComponentInChildren<CharacterModel>().baseRendererInfos[0].defaultMaterial;
+
+            Material mat = UnityEngine.Object.Instantiate<Material>(commandoMat);
+            mat.name = tempMat.name;
+
+            mat.SetColor("_Color", tempMat.GetColor("_Color"));
+            mat.SetTexture("_MainTex", tempMat.GetTexture("_MainTex"));
+            mat.SetColor("_EmColor", tempMat.GetColor("_EmissionMap"));
+            mat.SetFloat("_EmPower", tempMat.shaderKeywords.Contains("_EMISSION")? 1: 0);
+            mat.SetTexture("_EmTex", tempMat.GetTexture("_EmissionMap"));
+            mat.SetFloat("_NormalStrength", tempMat.GetFloat("_BumpScale"));
+
+            return mat;
+        }
+
         public static Material CreateMaterial(AssetBundle assetbundle, string materialName, float emission, Color emissionColor, float normalStrength)
         {
             if (!commandoMat) commandoMat = Resources.Load<GameObject>("Prefabs/CharacterBodies/CommandoBody").GetComponentInChildren<CharacterModel>().baseRendererInfos[0].defaultMaterial;
@@ -386,5 +406,116 @@ namespace EnforcerPlugin {
 
             return CreateMaterial(Assets.MainAssetBundle, materialName, emission, emissionColor, normalStrength);
         }
+    }
+
+    public static class Sounds {
+        public static readonly string CharSelect = "Play_Enforcer_CharSelect";
+
+        public static readonly string FireShotgun = "Play_RiotShotgun_shoot";
+        public static readonly string FireShotgunCrit = "Play_RiotShotgun_Crit";
+        public static readonly string FireClassicShotgun = "Ror1_Shotgun";
+
+        public static readonly string FireSuperShotgun = "Super_Shotgun";
+        public static readonly string FireSuperShotgunCrit = "Super_Shotgun_crit";
+        public static readonly string FireSuperShotgunDOOM = "Doom_2_Super_Shotgun";
+        public static readonly string FireSuperShotgunSingle = "Play_SSG_single";
+        public static readonly string FireSuperShotgunSingleCrit = "Play_SSG_single_crit";
+
+        public static readonly string FireAssaultRifleSlow = "Assault_Shots_1";
+        public static readonly string FireAssaultRifleFast = "Assault_Shots_2";
+
+        public static readonly string FireBlasterShotgun = "Blaster_Shotgun";
+        public static readonly string FireBlasterRifle = "Blaster_Rifle";
+
+        public static readonly string FireBungusShotgun = "Bungus_Riot";
+        public static readonly string FireBungusSSG = "Bungus_SSg";
+        public static readonly string FireBungusRifle = "Bungus_AR";
+
+        public static readonly string ShieldBash = "Bash";
+        public static readonly string BashHitEnemy = "Bash_Hit_Enemy";
+        public static readonly string BashDeflect = "Bash_Deflect"; //"Play_Reflect_Ding"
+        public static readonly string SirenDeflect = "Play_Siren_Reflect";
+
+        public static readonly string ShoulderBashHit = "Shoulder_Bash_Hit";
+
+        public static readonly string LaunchStunGrenade = "Launch_Stun";
+        public static readonly string StunExplosion = "Stun_Explosion";
+
+        public static readonly string LaunchTearGas = "Launch_Gas";
+        public static readonly string GasExplosion = "Gas_Explosion";
+        public static readonly string GasContinuous = "Gas_Continous";
+
+        public static readonly string ShieldUp = "R_up";
+        public static readonly string ShieldDown = "R_down";
+
+        public static readonly string ShieldBlockLight = "Shield_Block_light";
+        public static readonly string ShieldBlockHeavy = "Shield_Block_heavy";
+
+        public static readonly string EnergyShieldUp = "Energy_R_Up";
+        public static readonly string EnergyShieldDown = "Energy_R_down";
+
+        public static readonly string ShellHittingFloor = "Shell_Hitting_floor";
+        public static readonly string ShellHittingFloorFast = "Shell_Hitting_Floor_Fast";
+        public static readonly string ShellHittingFloorSlow = "Shell_Hitting_Floor_Slow";
+
+        public static readonly string NemesisSwing = "Play_Heavy_Swing";
+        public static readonly string NemesisImpact = "Play_Heavy_Swing_Hit";
+        public static readonly string NemesisSwing2 = "Play_HammerswingNewL";
+        public static readonly string NemesisImpact2 = "Play_NemHammerImpact";
+        public static readonly string NemesisSwingSecondary = "Play_NemSwingSecondary";
+
+        public static readonly string NemesisSwingAxe = "NemforcerAxeSwing";
+        public static readonly string NemesisImpactAxe = "NemforcerAxeHit";
+
+        public static readonly string NemesisStartCharge = "Play_chargeStart";
+        public static readonly string NemesisMaxCharge = "Play_chargeMax";
+        public static readonly string NemesisFlameLoop = "Play_HammerFlameLoop";
+        public static readonly string NemesisFlameBurst = "Play_Hammer_Slam";
+        public static readonly string NemesisSwingL = "Play_Heavy_Swing_L";
+        public static readonly string NemesisSmash = "Play_Hammer_Smash";
+
+        public static readonly string NemesisGrenadeThrow = "Play_GrenadeThrow";
+
+        public static readonly string NemesisMinigunSheathe = "Play_MinigunSheathe";
+        public static readonly string NemesisMinigunUnsheathe = "Play_MinigunUnsheathe";
+        public static readonly string NemesisMinigunWindDown = "Play_minigun_wind_down";
+        public static readonly string NemesisMinigunWindUp = "Play_minigun_wind_up";
+        public static readonly string NemesisMinigunShooting = "Play_Minigun_Shoot";
+
+        public static readonly string NemesisMinigunSpinUp = "NemforcerMinigunSpinUp";
+        public static readonly string NemesisMinigunSpinDown = "NemforcerMinigunSpinDown";
+        public static readonly string NemesisMinigunLoop = "NemforcerMinigunLoop";
+
+        public static readonly string DeathSound = "Death_Siren";
+        public static readonly string SirenButton = "Siren_Button";
+        public static readonly string SirenSpawn = "Siren_Spawn";
+        public static readonly string Croak = "Croak_siren";
+        public static readonly string HomeRun = "Play_Home_Run_Bat_Hit";
+        public static readonly string Bonk = "Play_Bonk";
+
+        public static readonly string DefaultDance = "Default_forcer";
+        public static readonly string Floss = "Flossforcer";
+        public static readonly string InfiniteDab = "Infiniforcer";
+        public static readonly string DOOM = "DOOM";
+        public static readonly string MioHonda = "Mio_Honda";
+
+        public static readonly string SkateGrind = "grindmetal03";
+        public static readonly string SkateLand = "Landing";
+        public static readonly string SkateOllie = "Ollie";
+        public static readonly string Skate180 = "Play_180";
+        public static readonly string SkateRoll = "rollconcrete02";
+        //rtcp - Skateboard_Speed
+
+        public static readonly string SkamteJumpGap = "HUD_jumpgap";
+        public static readonly string SkamteScore = "HUD_score";
+        public static readonly string SkamtePerfectTrick = "HUD_perfecttrick";
+        public static readonly string SkamteSpecialTrick = "HUD_specialtrick";
+
+        public static readonly string DededeSwing = "Play_se_dedede_hammer_swing_m";
+        public static readonly string DededeImpactS = "Play_dedede_hammer_attack_m";
+        public static readonly string DededeImpactL = "Play_dedede_hammer_attack_l";
+
+        public static readonly string HMGShoot = "Play_HMG_shoot";
+        public static readonly string HMGCrit = "Play_HMG_crit";
     }
 }

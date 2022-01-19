@@ -21,9 +21,10 @@ namespace EnforcerPlugin.Modules {
         public static ConfigEntry<bool> multipleInvasions;
         public static ConfigEntry<bool> kingDededeBoss;
 
-        public static ConfigEntry<KeyCode> defaultDanceKey;
-        public static ConfigEntry<KeyCode> flossKey;
-        public static ConfigEntry<KeyCode> earlKey;
+        public static ConfigEntry<KeyCode> restKey;
+        public static ConfigEntry<KeyCode> saluteKey;
+        public static ConfigEntry<KeyCode> danceKey;
+        public static ConfigEntry<KeyCode> runKey;
         public static ConfigEntry<KeyCode> sirensKey;
 
         //i don't wanna fucking buff him so i have no choice but to do this
@@ -106,7 +107,9 @@ namespace EnforcerPlugin.Modules {
             //  = plugin.Config.Bind("01 - General Settings",
             //                       "I hate fun",
             //                       false,
-            //                       "Overrides cursed. Further disables some extra content, namely skins and their achievements");
+            //                       "Overrides cursed. Further disables extra content, namely skins and their achievements");
+            //cursed.Value |= hateFun.Value;
+
             //femSkin
             //  = plugin.Config.Bind("01 - General Settings",
             //                       "Femforcer",
@@ -135,26 +138,34 @@ namespace EnforcerPlugin.Modules {
             #endregion general
 
             #region keybinds
-            defaultDanceKey
+            restKey
                 = plugin.Config.Bind("02 - Keybinds",
-                                     "Default Dance",
+                                     "Rest Emote",
                                      KeyCode.Alpha1,
                                      "Key used to Chair");
-            flossKey
+            saluteKey
                 = plugin.Config.Bind("02 - Keybinds",
-                                     "Floss",
+                                     "Salute Emote",
                                      KeyCode.Alpha2,
                                      "Key used to Salute");
-            earlKey
+            danceKey
                 = plugin.Config.Bind("02 - Keybinds",
-                                     "Earl Run",
+                                     "Dance Moves Emote",
                                      KeyCode.Alpha3,
-                                     "FLINT LOCKWOOD (when it works again)");
-            sirensKey
-                = plugin.Config.Bind("02 - Keybinds",
-                                     "Sirens",
-                                     KeyCode.CapsLock,
-                                     "Key used to toggle sirens");
+                                     "the Default one");
+            if (EnforcerModPlugin.holdonasec)
+            {
+                runKey
+                    = plugin.Config.Bind("02 - Keybinds",
+                                         "Earl Run Emote",
+                                         KeyCode.Alpha4,
+                                         "FLINT LOCKWOOD");
+                sirensKey
+                    = plugin.Config.Bind("02 - Keybinds",
+                                         "Sirens",
+                                         KeyCode.CapsLock,
+                                         "Key used to toggle sirens");
+            }
             #endregion keybinds
 
             #region character stats
@@ -211,7 +222,6 @@ namespace EnforcerPlugin.Modules {
             #endregion character stats
 
             #region riot
-
             shotgunDamage
                 = plugin.Config.Bind("04 - Riot Shotgun 3.1.0",
                                      "Damage Coefficient",
